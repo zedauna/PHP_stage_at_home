@@ -1,0 +1,444 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 13.1
+-- Dumped by pg_dump version 13.1
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: fetcher(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fetcher(n integer) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+declare
+exp record;
+begin
+for exp in select nom_auteur
+from t_auteur
+order by prenom_auteur
+limit n
+loop
+raise notice '%',exp.nom_auteur ;
+end loop;
+end;
+$$;
+
+
+ALTER FUNCTION public.fetcher(n integer) OWNER TO postgres;
+
+--
+-- Name: mimax(integer, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.mimax(a integer, b integer, c integer, OUT max integer, OUT min integer) RETURNS record
+    LANGUAGE plpgsql
+    AS $$
+begin
+max=greatest(a, b, c);
+min=least(a,b,c);
+end;
+$$;
+
+
+ALTER FUNCTION public.mimax(a integer, b integer, c integer, OUT max integer, OUT min integer) OWNER TO postgres;
+
+--
+-- Name: req(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.req(var integer) RETURNS TABLE(ident integer, nam character varying)
+    LANGUAGE plpgsql
+    AS $$
+begin
+return query select num_auteur, nom_auteur from t_auteur
+where num_auteur=var;
+end;
+$$;
+
+
+ALTER FUNCTION public.req(var integer) OWNER TO postgres;
+
+--
+-- Name: sq(numeric); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.sq(INOUT a numeric) RETURNS numeric
+    LANGUAGE plpgsql
+    AS $$
+begin
+a=a*a;
+end;
+$$;
+
+
+ALTER FUNCTION public.sq(INOUT a numeric) OWNER TO postgres;
+
+--
+-- Name: total(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.total() RETURNS integer
+    LANGUAGE plpgsql
+    AS $$
+declare
+total integer;
+begin
+select count(*)into total from t_auteur;
+return total;
+end;
+$$;
+
+
+ALTER FUNCTION public.total() OWNER TO postgres;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: t_auteur; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.t_auteur (
+    num_auteur integer NOT NULL,
+    nom_auteur character varying(30),
+    prenom_auteur character varying(30),
+    login character varying(20),
+    mdp character varying(50)
+);
+
+
+ALTER TABLE public.t_auteur OWNER TO postgres;
+
+--
+-- Name: t_correspondre; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.t_correspondre (
+    num_image integer NOT NULL,
+    num_theme integer NOT NULL
+);
+
+
+ALTER TABLE public.t_correspondre OWNER TO postgres;
+
+--
+-- Name: t_image; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.t_image (
+    num_image integer NOT NULL,
+    nom_fichier character varying(40),
+    date_mel date,
+    num_auteur integer
+);
+
+
+ALTER TABLE public.t_image OWNER TO postgres;
+
+--
+-- Name: t_theme; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.t_theme (
+    num_theme integer NOT NULL,
+    nom_theme character varying(30)
+);
+
+
+ALTER TABLE public.t_theme OWNER TO postgres;
+
+--
+-- Name: essaiphp; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.essaiphp AS
+ SELECT a.num_image,
+    a.nom_fichier,
+    a.date_mel,
+    b.nom_auteur,
+    b.prenom_auteur,
+    d.nom_theme
+   FROM (((public.t_image a
+     JOIN public.t_auteur b ON ((a.num_auteur = b.num_auteur)))
+     JOIN public.t_correspondre c ON ((c.num_image = a.num_image)))
+     JOIN public.t_theme d ON ((d.num_theme = c.num_theme)));
+
+
+ALTER TABLE public.essaiphp OWNER TO postgres;
+
+--
+-- Name: t_auteur_num_auteur_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.t_auteur_num_auteur_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.t_auteur_num_auteur_seq OWNER TO postgres;
+
+--
+-- Name: t_auteur_num_auteur_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.t_auteur_num_auteur_seq OWNED BY public.t_auteur.num_auteur;
+
+
+--
+-- Name: t_image_num_image_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.t_image_num_image_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.t_image_num_image_seq OWNER TO postgres;
+
+--
+-- Name: t_image_num_image_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.t_image_num_image_seq OWNED BY public.t_image.num_image;
+
+
+--
+-- Name: t_theme_num_theme_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.t_theme_num_theme_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.t_theme_num_theme_seq OWNER TO postgres;
+
+--
+-- Name: t_theme_num_theme_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.t_theme_num_theme_seq OWNED BY public.t_theme.num_theme;
+
+
+--
+-- Name: t_auteur num_auteur; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.t_auteur ALTER COLUMN num_auteur SET DEFAULT nextval('public.t_auteur_num_auteur_seq'::regclass);
+
+
+--
+-- Name: t_image num_image; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.t_image ALTER COLUMN num_image SET DEFAULT nextval('public.t_image_num_image_seq'::regclass);
+
+
+--
+-- Name: t_theme num_theme; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.t_theme ALTER COLUMN num_theme SET DEFAULT nextval('public.t_theme_num_theme_seq'::regclass);
+
+
+--
+-- Data for Name: t_auteur; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.t_auteur (num_auteur, nom_auteur, prenom_auteur, login, mdp) FROM stdin;
+1	Dupont	Charles	dupont	dupont
+2	Durand	Gilles	durand	durand
+3	vig	jeros	albos	D@kinglo1
+4	vig	jeros	albos	D@kinglo1
+5	vig	jeros	albos	D@kinglo1
+6	vig	jeros	albos	a558e7296da4b516afb49b059b020ba0
+\.
+
+
+--
+-- Data for Name: t_correspondre; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.t_correspondre (num_image, num_theme) FROM stdin;
+1	1
+1	3
+2	1
+2	2
+2	3
+3	2
+4	1
+4	3
+5	1
+6	2
+6	3
+\.
+
+
+--
+-- Data for Name: t_image; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.t_image (num_image, nom_fichier, date_mel, num_auteur) FROM stdin;
+1	ch1.jpg	2019-12-21	1
+2	ch2.jpg	2020-01-15	1
+3	ch3.jpg	2020-02-18	2
+4	ch4.jpg	2020-02-19	2
+5	ch5.jpg	2020-03-02	1
+6	cl1.jpg	2019-11-23	1
+7	jeros.gif	2020-12-13	1
+8	jeros.jng	2020-12-13	2
+9	jes.png	2020-12-13	1
+10	jes.png	2020-12-13	1
+11	jeros.jng	2020-12-13	1
+12	jeros.jng	2020-12-13	1
+13	jeros.gif	2020-12-13	1
+14	jeros.gif	2020-12-13	1
+15	jeros.gif	2020-12-13	1
+\.
+
+
+--
+-- Data for Name: t_theme; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.t_theme (num_theme, nom_theme) FROM stdin;
+1	Paysages
+2	Sports
+3	Animaux
+4	
+5	
+6	banane
+7	banane
+8	
+9	
+\.
+
+
+--
+-- Name: t_auteur_num_auteur_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.t_auteur_num_auteur_seq', 6, true);
+
+
+--
+-- Name: t_image_num_image_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.t_image_num_image_seq', 15, true);
+
+
+--
+-- Name: t_theme_num_theme_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.t_theme_num_theme_seq', 9, true);
+
+
+--
+-- Name: t_auteur t_auteur_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.t_auteur
+    ADD CONSTRAINT t_auteur_pkey PRIMARY KEY (num_auteur);
+
+
+--
+-- Name: t_correspondre t_correspondre_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.t_correspondre
+    ADD CONSTRAINT t_correspondre_pkey PRIMARY KEY (num_image, num_theme);
+
+
+--
+-- Name: t_image t_image_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.t_image
+    ADD CONSTRAINT t_image_pkey PRIMARY KEY (num_image);
+
+
+--
+-- Name: t_theme t_theme_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.t_theme
+    ADD CONSTRAINT t_theme_pkey PRIMARY KEY (num_theme);
+
+
+--
+-- Name: fki_num_auteur; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_num_auteur ON public.t_image USING btree (num_auteur);
+
+
+--
+-- Name: num_image; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX num_image ON public.t_correspondre USING btree (num_image);
+
+
+--
+-- Name: num_theme; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX num_theme ON public.t_correspondre USING btree (num_theme);
+
+
+--
+-- Name: t_correspondre t_correspondre_num_image_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.t_correspondre
+    ADD CONSTRAINT t_correspondre_num_image_fkey FOREIGN KEY (num_image) REFERENCES public.t_image(num_image) NOT VALID;
+
+
+--
+-- Name: t_correspondre t_correspondre_num_theme_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.t_correspondre
+    ADD CONSTRAINT t_correspondre_num_theme_fkey FOREIGN KEY (num_theme) REFERENCES public.t_theme(num_theme) NOT VALID;
+
+
+--
+-- Name: t_image t_image_num_auteur_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.t_image
+    ADD CONSTRAINT t_image_num_auteur_fkey FOREIGN KEY (num_auteur) REFERENCES public.t_auteur(num_auteur) NOT VALID;
+
+
+--
+-- PostgreSQL database dump complete
+--
+
